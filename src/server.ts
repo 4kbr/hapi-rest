@@ -3,12 +3,27 @@
 import dotenv from "dotenv";
 dotenv.config();
 import Hapi from "@hapi/hapi";
+import HapiGeoLocate from "hapi-geo-locate";
+
+interface Reqquest {
+  location: string;
+  [key: string]: string;
+}
 
 const init = async (): Promise<void> => {
   const server = new Hapi.Server({
     host: process.env.HOST || "localhost",
     port: process.env.PORT || 9876,
   });
+
+  await server.register([
+    {
+      plugin: HapiGeoLocate,
+      options: {
+        enabledByDefault: false,
+      },
+    },
+  ]);
 
   server.route([
     {
@@ -20,10 +35,20 @@ const init = async (): Promise<void> => {
     },
     {
       method: "GET",
+      path: "/location",
+      handler: (request: Reqquest, h) => {
+        if (request.location) {
+          return request.location;
+        } else {
+          return `<h1>Your location is not enabled by default!</h1>`;
+        }
+      },
+    },
+    {
+      method: "GET",
       path: "/users/{dinamicparam}",
       handler: (request, h) => {
         console.log(request.params);
-
         return `<h1>Hello ${request.params.dinamicparam}</h1>`;
       },
     },
